@@ -17,6 +17,12 @@ def maxIntensity(im, dim):
 				max = im[i][j]
 	return max
 
+def isBigger(maxValue, keypoints):
+	for i in range(0,len(keypoints)):
+		if(maxValue > keypoints[i].size):
+			return True
+	return False
+
 skymap = sys.argv[1]
 
 file = fits.open(skymap)
@@ -57,12 +63,10 @@ if len(keypoints) > 0:
 		indexOfMax = 0
 		for i in range(0,len(keypoints)):
 			if(keypoints[i].size > maxArea):
-				# print(str(keypoints[i].size) + '(' + str(keypoints[i].pt[0])+ ',' +
-				# 	str(keypoints[i].pt[1])+')')
 				maxArea = keypoints[i].size
 				indexOfMax = i
-		#Thresholding 
-		if maxArea > 6:
+		
+		if isBigger(maxArea, keypoints):
 			keypoints[0] = keypoints[indexOfMax]
 			while len(keypoints) > 1:
 				keypoints.pop(1)
