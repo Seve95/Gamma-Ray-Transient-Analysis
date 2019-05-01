@@ -9,20 +9,6 @@ import sys
 
 #arg 1: skymap file 
 
-def maxIntensity(im, dim):
-	max = 0
-	for i in range(0, dim):
-		for j in range(0, dim):
-			if im[i][j] > max:
-				max = im[i][j]
-	return max
-
-def isBigger(maxValue, keypoints):
-	for i in range(0,len(keypoints)):
-		if(maxValue > keypoints[i].size):
-			return True
-	return False
-
 skymap = sys.argv[1]
 
 file = fits.open(skymap)
@@ -32,21 +18,16 @@ wcs = WCS(file[0].header)
 m = np.array(matrix, dtype='uint8')
 
 mSmoothed = cv2.blur(m,(3,3))
-m = mSmoothed
+ret,thresh1 = cv2.threshold(mSmoothed,2,255,cv2.THRESH_BINARY)
 
 kernel = np.ones((5,5),np.uint8)
-opening = cv2.morphologyEx(m,cv2.MORPH_OPEN, kernel)
+# Circular Kernel 
+kernel[0][0] = 0
+kernel[0][4] = 0
+kernel[4][0] = 0
+kernel[4][4] = 0
 
-ma = maxIntensity(opening,200)
-
-# Cancello eventuali punti di background rimasti 
-# è comunque possibile avere più punti blob con massima intensità
-for i in range(0, 200):
-	for j in range(0,200):
-		if opening[i][j] < ma:
-			opening[i][j] = 0 	
-		else:
-			opening[i][j] = 255
+opening = cv2.morphologyEx(thresh1,cv2.MORPH_OPEN, kernel)
 
 params = cv2.SimpleBlobDetector_Params()
 params.filterByColor = False
@@ -55,25 +36,6 @@ detector = cv2.SimpleBlobDetector_create(params)
 keypoints = detector.detect(opening)
 
 if len(keypoints) > 0:
-	# Se abbiamo più di un blob con massima intensità, seleziono quello con area 
-	# maggiore e rimuovo gli altri, in caso in cui il maggiore non abbia un area 
-	# maggiore di una certa soglia, allora non è considerato sorgente
-	if len(keypoints) > 1:
-		maxArea = 0
-		indexOfMax = 0
-		for i in range(0,len(keypoints)):
-			if(keypoints[i].size > maxArea):
-				maxArea = keypoints[i].size
-				indexOfMax = i
-		
-		if isBigger(maxArea, keypoints):
-			keypoints[0] = keypoints[indexOfMax]
-			while len(keypoints) > 1:
-				keypoints.pop(1)
-		else:
-			print('Source not found')
-			exit(1)
-
 	im_with_keypoints = cv2.drawKeypoints(opening, keypoints, np.array([]), 
 	(0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
 
@@ -81,7 +43,10 @@ if len(keypoints) > 0:
 	print('RA: ' + str(ra))
 	print('DEC: ' + str(dec))
 
-	plt.imshow(m,cmap='gray')
+	plt.imshow(mSmoothed,cmap='gray')
+	plt.show()
+
+	plt.imshow(thresh1,cmap='gray')
 	plt.show()
 
 	plt.imshow(opening,cmap='gray')
@@ -90,4 +55,13 @@ if len(keypoints) > 0:
 	plt.imshow(im_with_keypoints,cmap='gray')
 	plt.show()
 else:
+	plt.imshow(mSmoothed,cmap='gray')
+	plt.show()
+
+	plt.imshow(thresh1,cmap='gray')
+	plt.show()
+
+	plt.imshow(opening,cmap='gray')
+	plt.show()
+
 	print('Source not found')
