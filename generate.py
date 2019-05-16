@@ -6,12 +6,15 @@ import sys
 import random
 import os
 import model
+import shutil
 
 #arg 1: number of events
-#arg 2: destination folder 
+#arg 2: 1=source, otherwise noSource
+#arg 3: destination folder 
 
 path = os.getcwd()
-folder = sys.argv[2]
+source = sys.argv[2]
+folder = sys.argv[3]
 
 os.mkdir(folder)
 os.chdir(folder)
@@ -23,13 +26,17 @@ init_dec = 22.51
 for x in range(0,n):
 	sim = ctools.ctobssim()
 	smap = ctools.ctskymap()
-	newModel = 'sigma4-' + str(x) + '.xml'
-	ra = round(init_ra + random.uniform(-1,1),5)
-	dec = round(init_dec + random.uniform(-1,1),5)
-	model.createNewModel(path + '/sigma4.xml', newModel, ra, dec)
-	
-	sim['inmodel'] = newModel
-	sim['outevents'] = 'events' + str(x) +'.fits'
+	if source == "1":
+		newModel = 'sigma4(' + str(x) + ').xml'
+		ra = round(init_ra + random.uniform(-1,1),5)
+		dec = round(init_dec + random.uniform(-1,1),5)
+		model.createNewModel(path + '/sigma4.xml', newModel, ra, dec)
+		
+		sim['inmodel'] = newModel
+		sim['outevents'] = 'events' + str(x) +'.fits'
+	else:
+		sim['inmodel']   = '../noSource.xml'
+		sim['outevents'] = 'eventsNS' + str(x) +'.fits'
 	sim['caldb']     = 'prod2'
 	sim['irf']       = 'South_0.5h'
 	sim['ra']        = init_ra
@@ -41,10 +48,16 @@ for x in range(0,n):
 	sim['emax']      = 100.0
 	sim.execute()
 	
-	print('[' + str(int(((x + 1)/ n)*100)) + '%] - Generated' + ' events' + str(x) +'.fits -> (RA: ' + str(ra) + ', DEC: ' + str(dec) + ')')
+	if source == "1":
+		print('[' + str(int(((x + 1)/ n)*100)) + '%] - Generated' + ' events' + str(x) +'.fits -> (RA: ' + str(ra) + ', DEC: ' + str(dec) + ')')
 
-	smap['inobs']       = 'events' + str(x) +'.fits'
-	smap['outmap']      = 'skymap' + str(x) + '.fits'
+		smap['inobs']       = 'events' + str(x) +'.fits'
+		smap['outmap']      = 'skymap' + str(x) + '.fits'
+	else:
+		print('[' + str(int(((x + 1)/ n)*100)) + '%] - Generated' + ' eventsNS' + str(x) +'.fits')
+
+		smap['inobs']       = 'eventsNS' + str(x) +'.fits'
+		smap['outmap']      = 'skymapNS' + str(x) + '.fits'
 	smap['emin']        = 0.1
 	smap['emax']        = 100.0
 	smap['bkgsubtract'] = 'NONE'
@@ -57,4 +70,7 @@ for x in range(0,n):
 	smap['nypix']       = 200
 	smap.execute()
 
+if source != "1":
+	shutil.copy('../noSource.xml','noSource.xml')
+	
 print('---DONE---')
