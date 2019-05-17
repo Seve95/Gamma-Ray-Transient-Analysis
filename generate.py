@@ -27,7 +27,7 @@ for x in range(0,n):
 	sim = ctools.ctobssim()
 	smap = ctools.ctskymap()
 	if source == "1":
-		newModel = 'sigma4(' + str(x) + ').xml'
+		newModel = 'sigma4-' + str(x) + '.xml'
 		ra = round(init_ra + random.uniform(-1,1),5)
 		dec = round(init_dec + random.uniform(-1,1),5)
 		model.createNewModel(path + '/sigma4.xml', newModel, ra, dec)
