@@ -41,7 +41,7 @@ wcs = WCS(file[0].header)
 m = np.array(matrix, dtype='uint8')
 
 mSmoothed = cv2.blur(m,(3,3))
-ret,thresh1 = cv2.threshold(mSmoothed,2,255,cv2.THRESH_BINARY)
+ret,thresh1 = cv2.threshold(mSmoothed,1,255,cv2.THRESH_BINARY)
 
 kernel = np.ones((4,4),np.uint8)
 # Circular Kernel 
@@ -65,14 +65,24 @@ detector = cv2.SimpleBlobDetector_create(params)
 keypoints = detector.detect(opening)
 
 isFound = False
+foundOne = False
 
-if len(keypoints) > 0:
+if s == 1:
+	print('Origin RA: ' + str(origin_ra))
+	print('Oriring DEC: ' + str(origin_dec) + ('\n'))
+
+if len(keypoints) == 0:
+	#try with lower threshold
+	ret,thresh1 = cv2.threshold(mSmoothed,0,255,cv2.THRESH_BINARY)
+	opening = cv2.morphologyEx(thresh1,cv2.MORPH_OPEN, kernel)
+	keypoints = detector.detect(opening)
+
+if len(keypoints) == 1:
 	isFound = True
-
+	foundOne = True
+	ra, dec = wcs.all_pix2world(keypoints[0].pt[0], keypoints[0].pt[1], 1, ra_dec_order=True)
 	im_with_keypoints = cv2.drawKeypoints(opening, keypoints, np.array([]), 
 	(0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
-
-	ra, dec = wcs.all_pix2world(keypoints[0].pt[0], keypoints[0].pt[1], 1, ra_dec_order=True)
 	print('RA: ' + str(ra))
 	print('DEC: ' + str(dec))
 
@@ -91,8 +101,67 @@ if len(keypoints) > 0:
 		log.write(skymap + " " + str(s) + " " + "-" + " " + "-" + " " + str(1) + " " +
 			str(ra) + " " + str(dec) + " FP\n")
 
-else:
-	print('Source not found')
+if len(keypoints) > 1:
+	isFound = True
+
+	tmp = 0
+	tmpMax = 0
+	tmpIndex = 0
+	i = 0
+	for k in keypoints:
+		ra, dec = wcs.all_pix2world(k.pt[0], k.pt[1], 1, ra_dec_order=True)
+		print(str(i))
+		print('RA: ' + str(ra))
+		print('DEC: ' + str(dec))
+		print(str(k.size) + '\n')
+		tmp = tmp + k.size
+		if k.size > tmpMax:
+			tmpMax = k.size
+			tmpIndex = i
+		i = i + 1
+
+	av = tmp/len(keypoints)
+	ratio = tmpMax/av
+
+	print('\nAVARAGE: ' + str(av))
+	print('MAX AREA: ' + str(tmpMax))
+	print('RAPPORTO: ' + str(ratio))
+
+	im_with_keypoints = cv2.drawKeypoints(opening, keypoints, np.array([]), 
+	(0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
+
+	if ratio > 1.49:
+
+		ra, dec = wcs.all_pix2world(keypoints[tmpIndex].pt[0], keypoints[tmpIndex].pt[1], 1, ra_dec_order=True)
+		print('RA: ' + str(ra))
+		print('DEC: ' + str(dec))
+
+		if s == 1:
+			if correctCoordinates(origin_ra, origin_dec, ra, dec):
+				#True positive
+				log.write(skymap + " " + str(s) + " " + str(origin_ra) + " " + str(origin_dec) + " " + str(1) + " " +
+					str(ra) + " " + str(dec) + " TP\n")
+
+			else:
+				#wrong coordinates, so a false postive
+				log.write(skymap + " " + str(s) + " " + str(origin_ra) + " " + str(origin_dec) + " " + str(1) + " " +
+					str(ra) + " " + str(dec) + " FP\n")
+		else:
+			#False positive
+			log.write(skymap + " " + str(s) + " " + "-" + " " + "-" + " " + str(1) + " " +
+				str(ra) + " " + str(dec) + " FP\n")
+	else:
+		print('Source not found')
+		if s == 1:
+			#False negative
+			log.write(skymap + " " + str(s) + " " + str(origin_ra) + " " + str(origin_dec) + " " + str(0) + " " +
+				"-" + " " + "-" + " FN\n")
+		else:
+			#True negative
+			log.write(skymap + " " + str(s) + " " + "-" + " " + "-" + " " + str(0) + " " +
+				"-" + " " + "-" + " TN\n")
+
+if isFound == False and foundOne == False:
 	if s == 1:
 		#False negative
 		log.write(skymap + " " + str(s) + " " + str(origin_ra) + " " + str(origin_dec) + " " + str(0) + " " +
