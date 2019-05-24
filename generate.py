@@ -11,10 +11,12 @@ import shutil
 #arg 1: number of events
 #arg 2: 1=source, otherwise noSource
 #arg 3: destination folder 
+#arg 4: starting seed
 
 path = os.getcwd()
 source = sys.argv[2]
 folder = sys.argv[3]
+startSeed = int(sys.argv[4])
 
 os.mkdir(folder)
 os.chdir(folder)
@@ -22,7 +24,6 @@ os.chdir(folder)
 n = int(sys.argv[1])
 init_ra  = 83.63
 init_dec = 22.51
-i = 1
 
 for x in range(0,n):
 	sim = ctools.ctobssim()
@@ -47,8 +48,8 @@ for x in range(0,n):
 	sim['tmax']      = '2020-01-01T00:15:00'
 	sim['emin']      = 0.1
 	sim['emax']      = 100.0
-	sim['debug']     = True 
-	sim['seed']      = i
+	#sim['debug']     = True 
+	sim['seed']      = startSeed
 	sim.execute()
 	
 
@@ -74,7 +75,7 @@ for x in range(0,n):
 	smap['nypix']       = 200
 	smap.execute()
 
-	i = i + 1
+	startSeed = startSeed + 1
 
 if source != "1":
 	shutil.copy('../noSource.xml','noSource.xml')
