@@ -67,9 +67,9 @@ keypoints = detector.detect(opening)
 isFound = False
 foundOne = False
 
-if s == 1:
-	print('Origin RA: ' + str(origin_ra))
-	print('Oriring DEC: ' + str(origin_dec) + ('\n'))
+#if s == 1:
+	#print('Origin RA: ' + str(origin_ra))
+	#print('Oriring DEC: ' + str(origin_dec) + ('\n'))
 
 if len(keypoints) == 0:
 	#try with lower threshold
@@ -83,8 +83,8 @@ if len(keypoints) == 1:
 	ra, dec = wcs.all_pix2world(keypoints[0].pt[0], keypoints[0].pt[1], 1, ra_dec_order=True)
 	im_with_keypoints = cv2.drawKeypoints(opening, keypoints, np.array([]), 
 	(0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
-	print('RA: ' + str(ra))
-	print('DEC: ' + str(dec))
+	#print('RA: ' + str(ra))
+	#print('DEC: ' + str(dec))
 
 	if s == 1:
 		if correctCoordinates(origin_ra, origin_dec, ra, dec):
@@ -110,10 +110,10 @@ if len(keypoints) > 1:
 	i = 0
 	for k in keypoints:
 		ra, dec = wcs.all_pix2world(k.pt[0], k.pt[1], 1, ra_dec_order=True)
-		print(str(i))
-		print('RA: ' + str(ra))
-		print('DEC: ' + str(dec))
-		print(str(k.size) + '\n')
+		#print(str(i))
+		#print('RA: ' + str(ra))
+		#print('DEC: ' + str(dec))
+		#print(str(k.size) + '\n')
 		tmp = tmp + k.size
 		if k.size > tmpMax:
 			tmpMax = k.size
@@ -123,9 +123,9 @@ if len(keypoints) > 1:
 	av = tmp/len(keypoints)
 	ratio = tmpMax/av
 
-	print('\nAVARAGE: ' + str(av))
-	print('MAX AREA: ' + str(tmpMax))
-	print('RAPPORTO: ' + str(ratio))
+	#print('\nAVARAGE: ' + str(av))
+	#print('MAX AREA: ' + str(tmpMax))
+	#print('RAPPORTO: ' + str(ratio))
 
 	im_with_keypoints = cv2.drawKeypoints(opening, keypoints, np.array([]), 
 	(0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
@@ -133,8 +133,6 @@ if len(keypoints) > 1:
 	if ratio > 1.49:
 
 		ra, dec = wcs.all_pix2world(keypoints[tmpIndex].pt[0], keypoints[tmpIndex].pt[1], 1, ra_dec_order=True)
-		print('RA: ' + str(ra))
-		print('DEC: ' + str(dec))
 
 		if s == 1:
 			if correctCoordinates(origin_ra, origin_dec, ra, dec):
@@ -151,7 +149,7 @@ if len(keypoints) > 1:
 			log.write(skymap + " " + str(s) + " " + "-" + " " + "-" + " " + str(1) + " " +
 				str(ra) + " " + str(dec) + " FP\n")
 	else:
-		print('Source not found')
+		#print('Source not found')
 		if s == 1:
 			#False negative
 			log.write(skymap + " " + str(s) + " " + str(origin_ra) + " " + str(origin_dec) + " " + str(0) + " " +
