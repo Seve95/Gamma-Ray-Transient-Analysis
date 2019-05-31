@@ -16,6 +16,13 @@ def correctCoordinates (real_ra, real_dec, ra, dec):
 		return True
 	return False
 
+def sortKeypoints(arr): 
+    n = len(arr) 
+    for i in range(n): 
+        for j in range(0, n-i-1): 
+            if arr[j].size > arr[j+1].size : 
+                arr[j], arr[j+1] = arr[j+1], arr[j] 
+
 
 skymap = sys.argv[1]
 inmodel = sys.argv[2]
@@ -102,37 +109,24 @@ if len(keypoints) == 1:
 			str(ra) + " " + str(dec) + " FP\n")
 
 if len(keypoints) > 1:
+	l = len(keypoints)
 	isFound = True
-
 	tmp = 0
-	tmpMax = 0
-	tmpIndex = 0
-	i = 0
+	sortKeypoints(keypoints)
+
 	for k in keypoints:
-		ra, dec = wcs.all_pix2world(k.pt[0], k.pt[1], 1, ra_dec_order=True)
-		#print(str(i))
-		#print('RA: ' + str(ra))
-		#print('DEC: ' + str(dec))
-		#print(str(k.size) + '\n')
 		tmp = tmp + k.size
-		if k.size > tmpMax:
-			tmpMax = k.size
-			tmpIndex = i
-		i = i + 1
 
 	av = tmp/len(keypoints)
-	ratio = tmpMax/av
-
-	#print('\nAVARAGE: ' + str(av))
-	#print('MAX AREA: ' + str(tmpMax))
-	#print('RAPPORTO: ' + str(ratio))
+	ratio = keypoints[l-1].size/av
+	
 
 	im_with_keypoints = cv2.drawKeypoints(opening, keypoints, np.array([]), 
 	(0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
 
-	if ratio > 1.49:
+	if ratio > 1.49 and keypoints[l-2].size < (0.7*keypoints[l-1].size):
 
-		ra, dec = wcs.all_pix2world(keypoints[tmpIndex].pt[0], keypoints[tmpIndex].pt[1], 1, ra_dec_order=True)
+		ra, dec = wcs.all_pix2world(keypoints[l-1].pt[0], keypoints[l-1].pt[1], 1, ra_dec_order=True)
 
 		if s == 1:
 			if correctCoordinates(origin_ra, origin_dec, ra, dec):
