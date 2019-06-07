@@ -73,25 +73,21 @@ keypoints = detector.detect(opening)
 
 isFound = False
 foundOne = False
-
-#if s == 1:
-	#print('Origin RA: ' + str(origin_ra))
-	#print('Oriring DEC: ' + str(origin_dec) + ('\n'))
+t0 = False
 
 if len(keypoints) == 0:
 	#try with lower threshold
+	t0 = True
 	ret,thresh1 = cv2.threshold(mSmoothed,0,255,cv2.THRESH_BINARY)
 	opening = cv2.morphologyEx(thresh1,cv2.MORPH_OPEN, kernel)
 	keypoints = detector.detect(opening)
 
-if len(keypoints) == 1:
+if len(keypoints) == 1 and t0 == False:
 	isFound = True
 	foundOne = True
 	ra, dec = wcs.all_pix2world(keypoints[0].pt[0], keypoints[0].pt[1], 1, ra_dec_order=True)
 	im_with_keypoints = cv2.drawKeypoints(opening, keypoints, np.array([]), 
 	(0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
-	#print('RA: ' + str(ra))
-	#print('DEC: ' + str(dec))
 
 	if s == 1:
 		if correctCoordinates(origin_ra, origin_dec, ra, dec):
@@ -124,7 +120,7 @@ if len(keypoints) > 1:
 	im_with_keypoints = cv2.drawKeypoints(opening, keypoints, np.array([]), 
 	(0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
 
-	if ratio > 1.49 and keypoints[l-2].size < (0.7*keypoints[l-1].size):
+	if ratio > 1.49:
 
 		ra, dec = wcs.all_pix2world(keypoints[l-1].pt[0], keypoints[l-1].pt[1], 1, ra_dec_order=True)
 
@@ -143,7 +139,6 @@ if len(keypoints) > 1:
 			log.write(skymap + " " + str(s) + " " + "-" + " " + "-" + " " + str(1) + " " +
 				str(ra) + " " + str(dec) + " FP\n")
 	else:
-		#print('Source not found')
 		if s == 1:
 			#False negative
 			log.write(skymap + " " + str(s) + " " + str(origin_ra) + " " + str(origin_dec) + " " + str(0) + " " +
