@@ -61,6 +61,7 @@ opening = cv2.morphologyEx(thresh1,cv2.MORPH_OPEN, kernel)
 
 params = cv2.SimpleBlobDetector_Params()
 params.filterByColor = False
+params.minDistBetweenBlobs = 0
 
 params.filterByInertia = False
 params.filterByConvexity = False
@@ -115,12 +116,11 @@ if len(keypoints) > 1:
 
 	av = tmp/len(keypoints)
 	ratio = keypoints[l-1].size/av
-	
 
 	im_with_keypoints = cv2.drawKeypoints(opening, keypoints, np.array([]), 
 	(0,0,255), cv2.DRAW_MATCHES_FLAGS_DEFAULT)
 
-	if ratio > 1.49:
+	if ratio > 1.61185:
 
 		ra, dec = wcs.all_pix2world(keypoints[l-1].pt[0], keypoints[l-1].pt[1], 1, ra_dec_order=True)
 
